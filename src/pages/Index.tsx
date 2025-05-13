@@ -1,10 +1,17 @@
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SettingsDrawer } from "@/components/SettingsDrawer";
 import { WorkItemForm } from "@/components/WorkItemForm";
+import { BulkWorkItemForm } from "@/components/BulkWorkItemForm";
+import { TaskBreakdownForm } from "@/components/TaskBreakdownForm";
+import { StoryTypeManager } from "@/components/StoryTypeManager";
+import { ProjectConfigForm } from "@/components/ProjectConfigForm";
 import { useSettings } from "@/contexts/SettingsContext";
+import { Card } from "@/components/ui/card";
+import { Settings, ListPlus, Files, Copy, FolderCog } from "lucide-react";
 
 const Index = () => {
-  const { settings, isConfigured } = useSettings();
+  const { settings, isConfigured, selectedProjectConfig } = useSettings();
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -13,11 +20,11 @@ const Index = () => {
         <SettingsDrawer />
       </header>
 
-      <main className="flex-1 container mx-auto p-6 max-w-3xl">
+      <main className="flex-1 container mx-auto p-6 max-w-6xl">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-2">Create Work Item</h2>
+          <h2 className="text-2xl font-bold mb-2">Work Item Management</h2>
           <p className="text-gray-600">
-            Quickly add features, backlog items, bugs, or tasks to your Azure DevOps project.
+            Create and manage work items in your Azure DevOps projects
           </p>
           
           {isConfigured ? (
@@ -25,7 +32,7 @@ const Index = () => {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              Connected to {settings.organization}/{settings.project}
+              Connected to {selectedProjectConfig ? selectedProjectConfig.name : `${settings.organization}/${settings.project}`}
             </div>
           ) : (
             <div className="mt-2 px-3 py-2 bg-amber-50 text-amber-700 rounded-md inline-flex items-center text-sm">
@@ -37,7 +44,50 @@ const Index = () => {
           )}
         </div>
 
-        <WorkItemForm />
+        <Tabs defaultValue="single" className="w-full">
+          <TabsList className="mb-6 grid grid-cols-5 w-full">
+            <TabsTrigger value="single" className="flex items-center">
+              <ListPlus className="h-4 w-4 mr-2" />
+              Single Work Item
+            </TabsTrigger>
+            <TabsTrigger value="bulk" className="flex items-center">
+              <Files className="h-4 w-4 mr-2" />
+              Bulk Creation
+            </TabsTrigger>
+            <TabsTrigger value="tasks" className="flex items-center">
+              <Copy className="h-4 w-4 mr-2" />
+              Task Breakdown
+            </TabsTrigger>
+            <TabsTrigger value="story-types" className="flex items-center">
+              <ListPlus className="h-4 w-4 mr-2" />
+              Story Types
+            </TabsTrigger>
+            <TabsTrigger value="config" className="flex items-center">
+              <FolderCog className="h-4 w-4 mr-2" />
+              Project Config
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="single">
+            <WorkItemForm />
+          </TabsContent>
+          
+          <TabsContent value="bulk">
+            <BulkWorkItemForm />
+          </TabsContent>
+          
+          <TabsContent value="tasks">
+            <TaskBreakdownForm />
+          </TabsContent>
+          
+          <TabsContent value="story-types">
+            <StoryTypeManager />
+          </TabsContent>
+          
+          <TabsContent value="config">
+            <ProjectConfigForm />
+          </TabsContent>
+        </Tabs>
       </main>
 
       <footer className="bg-white border-t py-4 px-6 text-center text-sm text-gray-500">
