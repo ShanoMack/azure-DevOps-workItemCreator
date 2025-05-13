@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -51,6 +52,12 @@ export default {
 				card: {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
+				},
+				azure: {
+					DEFAULT: '#0078d4',
+					light: '#0091ff',
+					dark: '#005a9e',
+					foreground: '#ffffff'
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',

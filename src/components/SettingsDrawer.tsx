@@ -1,0 +1,107 @@
+
+import { useState } from "react";
+import { Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Label } from "@/components/ui/label";
+import { useSettings } from "@/contexts/SettingsContext";
+import { SettingsData } from "@/types/azure-devops";
+
+export function SettingsDrawer() {
+  const { settings, updateSettings } = useSettings();
+  const [formData, setFormData] = useState<SettingsData>(settings);
+  const [open, setOpen] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSave = () => {
+    updateSettings(formData);
+    setOpen(false);
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button variant="outline" size="icon" className="rounded-full">
+          <Settings className="h-5 w-5" />
+          <span className="sr-only">Settings</span>
+        </Button>
+      </SheetTrigger>
+      <SheetContent className="sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle>Azure DevOps Settings</SheetTitle>
+          <SheetDescription>
+            Configure your Azure DevOps connection settings. These settings are stored locally in your browser.
+          </SheetDescription>
+        </SheetHeader>
+        <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="personalAccessToken">Personal Access Token (PAT)</Label>
+            <Input
+              id="personalAccessToken"
+              name="personalAccessToken"
+              type="password"
+              placeholder="Enter your PAT"
+              value={formData.personalAccessToken}
+              onChange={handleChange}
+            />
+            <p className="text-sm text-muted-foreground">
+              Your token is stored locally and never sent to our servers.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="organization">Organization Name</Label>
+            <Input
+              id="organization"
+              name="organization"
+              placeholder="your-organization"
+              value={formData.organization}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="project">Project Name</Label>
+            <Input
+              id="project"
+              name="project"
+              placeholder="Your-Project"
+              value={formData.project}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="team">Team Name (Optional)</Label>
+            <Input
+              id="team"
+              name="team"
+              placeholder="Your-Team"
+              value={formData.team}
+              onChange={handleChange}
+            />
+          </div>
+
+          <Button onClick={handleSave} className="mt-4 bg-azure hover:bg-azure-light">
+            Save Settings
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
