@@ -28,7 +28,7 @@ const Index = () => {
           <div>
             <h2 className="text-2xl font-bold">Azure DevOps Forge</h2>
             <p className="text-gray-600">
-              Quickly, create and manage work items across your Azure DevOps projects
+              Quick work item creator for your Azure DevOps projects
             </p>
           </div>
           
