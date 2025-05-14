@@ -4,6 +4,7 @@ export interface SettingsData {
   organization: string;
   project: string;
   team?: string;
+  path?: string;
   projectConfigs?: ProjectConfig[];
 }
 
