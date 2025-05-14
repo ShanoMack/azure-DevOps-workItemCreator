@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { StoryType, Task } from "@/types/azure-devops";
 import { useSettings } from "@/contexts/SettingsContext";
 import { applyTasksToWorkItems } from "@/services/azure-devops-service";
@@ -44,9 +44,14 @@ export function TaskBreakdownForm() {
       return;
     }
 
-    const selectedConfig = projectConfigs.find(pc => pc.id === projectConfigId);
-    if (!selectedConfig && projectConfigs.length > 0) {
+    if (!projectConfigId) {
       toast.error("Please select a project configuration");
+      return;
+    }
+
+    const selectedConfig = projectConfigs.find(pc => pc.id === projectConfigId);
+    if (!selectedConfig) {
+      toast.error("Invalid project configuration");
       return;
     }
     
@@ -61,15 +66,13 @@ export function TaskBreakdownForm() {
     }
     
     try {
-      // Use the selected project config or fall back to the global settings
-      const configToUse = selectedConfig 
-        ? {
-            ...settings,
-            organization: selectedConfig.organization,
-            project: selectedConfig.project,
-            path: selectedConfig.path
-          }
-        : settings;
+      // Use the selected project config with the global PAT
+      const configToUse = {
+        personalAccessToken: settings.personalAccessToken,
+        organization: selectedConfig.organization,
+        project: selectedConfig.project,
+        path: selectedConfig.path
+      };
 
       const storyType = storyTypes.find(s => s.id === storyTypeId);
       
@@ -98,32 +101,31 @@ export function TaskBreakdownForm() {
     <Card className="w-full mx-auto">
       <CardHeader>
         <CardTitle>Apply Task Breakdown to Work Items</CardTitle>
+        <CardDescription>Add predefined tasks to your existing work items</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {projectConfigs.length > 0 && (
-            <div className="space-y-2">
-              <label className="font-medium text-sm" htmlFor="projectConfig">Project Configuration</label>
-              <Select
-                value={projectConfigId}
-                onValueChange={setProjectConfigId}
-              >
-                <SelectTrigger id="projectConfig">
-                  <SelectValue placeholder="Select project configuration" />
-                </SelectTrigger>
-                <SelectContent>
-                  {projectConfigs.map(config => (
-                    <SelectItem key={config.id} value={config.id}>
-                      {config.name} ({config.organization}/{config.project})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-sm text-muted-foreground">
-                Select which project configuration to use
-              </p>
-            </div>
-          )}
+          <div className="space-y-2">
+            <label className="font-medium text-sm" htmlFor="projectConfig">Project Configuration</label>
+            <Select
+              value={projectConfigId}
+              onValueChange={setProjectConfigId}
+            >
+              <SelectTrigger id="projectConfig">
+                <SelectValue placeholder="Select project configuration" />
+              </SelectTrigger>
+              <SelectContent>
+                {projectConfigs.map(config => (
+                  <SelectItem key={config.id} value={config.id}>
+                    {config.name} ({config.organization}/{config.project}{config.path && ` - ${config.path}`})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              Select which project configuration to use
+            </p>
+          </div>
 
           <div className="space-y-2">
             <label className="font-medium text-sm" htmlFor="storyType">Story Type</label>
@@ -158,14 +160,16 @@ export function TaskBreakdownForm() {
           <Button 
             type="submit" 
             className="w-full bg-azure hover:bg-azure-light" 
-            disabled={loading || !isConfigured || !storyTypeId || workItemIds.length === 0}
+            disabled={loading || !isConfigured || !storyTypeId || workItemIds.length === 0 || !projectConfigId}
           >
             {loading ? "Applying..." : "Apply Tasks to Work Items"}
           </Button>
           
           {!isConfigured && (
             <p className="text-center text-sm text-muted-foreground">
-              Please configure your Azure DevOps settings first.
+              {!settings.personalAccessToken ? 
+                "Please add your Personal Access Token in settings first." : 
+                "Please add at least one project configuration first."}
             </p>
           )}
         </form>

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSettings } from "@/contexts/SettingsContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
 import { ProjectConfig } from "@/types/azure-devops";
 
@@ -49,6 +49,10 @@ export function ProjectConfigForm() {
     <Card className="mb-6">
       <CardHeader>
         <CardTitle>Project Configurations</CardTitle>
+        <CardDescription>
+          Add Azure DevOps project configurations that you can select when creating work items.
+          You'll need to add at least one configuration to use this app.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -92,6 +96,9 @@ export function ProjectConfigForm() {
                 onChange={handleInputChange}
                 placeholder="\Your\Path"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Path where work items will be created (e.g. \Area\Team)
+              </p>
             </div>
           </div>
           
@@ -114,7 +121,7 @@ export function ProjectConfigForm() {
                     <div className="flex-1">
                       <div className="font-medium">{config.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        {config.organization}/{config.project}{config.path ? config.path : ''}
+                        {config.organization}/{config.project}{config.path ? ` - Path: ${config.path}` : ''}
                       </div>
                     </div>
                     <div className="flex space-x-2">

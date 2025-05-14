@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { WorkItem } from "@/types/azure-devops";
 import { useSettings } from "@/contexts/SettingsContext";
 import { createBulkWorkItems } from "@/services/azure-devops-service";
@@ -59,9 +59,14 @@ export function BulkWorkItemForm() {
       return;
     }
 
-    const selectedConfig = projectConfigs.find(pc => pc.id === projectConfigId);
-    if (!selectedConfig && projectConfigs.length > 0) {
+    if (!projectConfigId) {
       toast.error("Please select a project configuration");
+      return;
+    }
+
+    const selectedConfig = projectConfigs.find(pc => pc.id === projectConfigId);
+    if (!selectedConfig) {
+      toast.error("Invalid project configuration");
       return;
     }
     
@@ -78,15 +83,13 @@ export function BulkWorkItemForm() {
     setLoading(true);
     
     try {
-      // Use the selected project config or fall back to the global settings
-      const configToUse = selectedConfig 
-        ? {
-            ...settings,
-            organization: selectedConfig.organization,
-            project: selectedConfig.project,
-            path: selectedConfig.path
-          }
-        : settings;
+      // Use the selected project config with the global PAT
+      const configToUse = {
+        personalAccessToken: settings.personalAccessToken,
+        organization: selectedConfig.organization,
+        project: selectedConfig.project,
+        path: selectedConfig.path
+      };
 
       const parentId = bulkData.parentId ? parseInt(bulkData.parentId) : undefined;
       const results = await createBulkWorkItems(
@@ -117,32 +120,31 @@ export function BulkWorkItemForm() {
     <Card className="w-full mx-auto">
       <CardHeader>
         <CardTitle>Bulk Work Item Creation</CardTitle>
+        <CardDescription>Create multiple work items at once by entering titles on separate lines</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleBulkSubmit} className="space-y-6">
-          {projectConfigs.length > 0 && (
-            <div className="space-y-2">
-              <Label htmlFor="projectConfig">Project Configuration</Label>
-              <Select
-                value={projectConfigId}
-                onValueChange={setProjectConfigId}
-              >
-                <SelectTrigger id="projectConfig">
-                  <SelectValue placeholder="Select project configuration" />
-                </SelectTrigger>
-                <SelectContent>
-                  {projectConfigs.map(config => (
-                    <SelectItem key={config.id} value={config.id}>
-                      {config.name} ({config.organization}/{config.project})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-sm text-muted-foreground">
-                Select which project configuration to use
-              </p>
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label htmlFor="projectConfig">Project Configuration</Label>
+            <Select
+              value={projectConfigId}
+              onValueChange={setProjectConfigId}
+            >
+              <SelectTrigger id="projectConfig">
+                <SelectValue placeholder="Select project configuration" />
+              </SelectTrigger>
+              <SelectContent>
+                {projectConfigs.map(config => (
+                  <SelectItem key={config.id} value={config.id}>
+                    {config.name} ({config.organization}/{config.project}{config.path && ` - ${config.path}`})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              Select which project configuration to use
+            </p>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -194,14 +196,16 @@ export function BulkWorkItemForm() {
           <Button 
             type="submit" 
             className="w-full bg-azure hover:bg-azure-light" 
-            disabled={loading || !isConfigured || !bulkData.titles.trim() || (projectConfigs.length > 0 && !projectConfigId)}
+            disabled={loading || !isConfigured || !bulkData.titles.trim() || !projectConfigId}
           >
             {loading ? "Creating..." : "Create Work Items"}
           </Button>
           
           {!isConfigured && (
             <p className="text-center text-sm text-muted-foreground">
-              Please configure your Azure DevOps settings first.
+              {!settings.personalAccessToken ? 
+                "Please add your Personal Access Token in settings first." : 
+                "Please add at least one project configuration first."}
             </p>
           )}
         </form>

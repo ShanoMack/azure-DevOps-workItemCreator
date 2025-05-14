@@ -15,7 +15,7 @@ import { WorkItem } from "@/types/azure-devops";
 import { useSettings } from "@/contexts/SettingsContext";
 import { createWorkItem } from "@/services/azure-devops-service";
 import { toast } from "sonner";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export function WorkItemForm() {
   const { settings, isConfigured, projectConfigs, selectedProjectConfig } = useSettings();
@@ -58,24 +58,27 @@ export function WorkItemForm() {
       return;
     }
 
-    const selectedConfig = projectConfigs.find(pc => pc.id === projectConfigId);
-    if (!selectedConfig && projectConfigs.length > 0) {
+    if (!projectConfigId) {
       toast.error("Please select a project configuration");
+      return;
+    }
+
+    const selectedConfig = projectConfigs.find(pc => pc.id === projectConfigId);
+    if (!selectedConfig) {
+      toast.error("Invalid project configuration");
       return;
     }
     
     setLoading(true);
     
     try {
-      // Use the selected project config or fall back to the global settings
-      const configToUse = selectedConfig 
-        ? {
-            ...settings,
-            organization: selectedConfig.organization,
-            project: selectedConfig.project,
-            path: selectedConfig.path
-          }
-        : settings;
+      // Use the selected project config with the global PAT
+      const configToUse = {
+        personalAccessToken: settings.personalAccessToken,
+        organization: selectedConfig.organization,
+        project: selectedConfig.project,
+        path: selectedConfig.path
+      };
 
       const result = await createWorkItem(configToUse, formData);
       
@@ -102,31 +105,33 @@ export function WorkItemForm() {
 
   return (
     <Card className="w-full mx-auto">
-      <CardContent className="pt-6">
+      <CardHeader>
+        <CardTitle>Create Single Work Item</CardTitle>
+        <CardDescription>Create a new work item in your selected project</CardDescription>
+      </CardHeader>
+      <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {projectConfigs.length > 0 && (
-            <div className="space-y-2">
-              <Label htmlFor="projectConfig">Project Configuration</Label>
-              <Select
-                value={projectConfigId}
-                onValueChange={setProjectConfigId}
-              >
-                <SelectTrigger id="projectConfig">
-                  <SelectValue placeholder="Select project configuration" />
-                </SelectTrigger>
-                <SelectContent>
-                  {projectConfigs.map(config => (
-                    <SelectItem key={config.id} value={config.id}>
-                      {config.name} ({config.organization}/{config.project}{config.path && ` - ${config.path}`})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-sm text-muted-foreground">
-                Select which project configuration to use
-              </p>
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label htmlFor="projectConfig">Project Configuration</Label>
+            <Select
+              value={projectConfigId}
+              onValueChange={setProjectConfigId}
+            >
+              <SelectTrigger id="projectConfig">
+                <SelectValue placeholder="Select project configuration" />
+              </SelectTrigger>
+              <SelectContent>
+                {projectConfigs.map(config => (
+                  <SelectItem key={config.id} value={config.id}>
+                    {config.name} ({config.organization}/{config.project}{config.path && ` - ${config.path}`})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              Select which project configuration to use
+            </p>
+          </div>
           
           <div className="space-y-2">
             <Label htmlFor="itemType">Work Item Type</Label>
@@ -185,14 +190,16 @@ export function WorkItemForm() {
           <Button 
             type="submit" 
             className="w-full bg-azure hover:bg-azure-light" 
-            disabled={loading || !isConfigured || (projectConfigs.length > 0 && !projectConfigId)}
+            disabled={loading || !isConfigured || !projectConfigId}
           >
             {loading ? "Creating..." : "Create Work Item"}
           </Button>
           
           {!isConfigured && (
             <p className="text-center text-sm text-muted-foreground">
-              Please configure your Azure DevOps settings first.
+              {!settings.personalAccessToken ? 
+                "Please add your Personal Access Token in settings first." : 
+                "Please add at least one project configuration first."}
             </p>
           )}
         </form>

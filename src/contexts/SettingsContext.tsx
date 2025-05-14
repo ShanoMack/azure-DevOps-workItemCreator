@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { SettingsData, ProjectConfig, StoryType, Task } from "../types/azure-devops";
 import { v4 as uuidv4 } from "uuid";
@@ -24,7 +23,6 @@ const defaultSettings: SettingsData = {
   organization: "",
   project: "",
   team: "",
-  projectConfigs: [],
 };
 
 const SettingsContext = createContext<SettingsContextType>({
@@ -69,13 +67,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem("ado-settings", JSON.stringify(settings));
     
-    // Check if the required settings are filled
+    // Check if the required settings are filled - now only requiring PAT and at least one project config
     setIsConfigured(
-      !!settings.personalAccessToken &&
-      !!settings.organization &&
-      !!settings.project
+      !!settings.personalAccessToken && projectConfigs.length > 0
     );
-  }, [settings]);
+  }, [settings, projectConfigs]);
 
   useEffect(() => {
     localStorage.setItem("ado-project-configs", JSON.stringify(projectConfigs));
@@ -108,6 +104,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const selectProjectConfig = (id: string) => {
     const config = projectConfigs.find(c => c.id === id) || null;
     setSelectedProjectConfig(config);
+    
+    // When selecting a project config, update the organization and project in settings
     if (config) {
       setSettings({
         ...settings,

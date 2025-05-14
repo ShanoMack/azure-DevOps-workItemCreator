@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,9 @@ import { SettingsData } from "@/types/azure-devops";
 
 export function SettingsDrawer() {
   const { settings, updateSettings } = useSettings();
-  const [formData, setFormData] = useState<SettingsData>(settings);
+  const [formData, setFormData] = useState<Pick<SettingsData, "personalAccessToken">>({
+    personalAccessToken: settings.personalAccessToken
+  });
   const [open, setOpen] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,7 +30,11 @@ export function SettingsDrawer() {
   };
 
   const handleSave = () => {
-    updateSettings(formData);
+    // Keep existing organization, project, and team values
+    updateSettings({
+      ...settings,
+      personalAccessToken: formData.personalAccessToken,
+    });
     setOpen(false);
   };
 
@@ -43,9 +48,9 @@ export function SettingsDrawer() {
       </SheetTrigger>
       <SheetContent className="sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>Azure DevOps Settings</SheetTitle>
+          <SheetTitle>Azure DevOps Authentication</SheetTitle>
           <SheetDescription>
-            Configure your Azure DevOps connection settings. These settings are stored locally in your browser.
+            Configure your Azure DevOps Personal Access Token. This token is stored locally in your browser.
           </SheetDescription>
         </SheetHeader>
         <div className="grid gap-4 py-4">
@@ -64,41 +69,8 @@ export function SettingsDrawer() {
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="organization">Organization Name</Label>
-            <Input
-              id="organization"
-              name="organization"
-              placeholder="your-organization"
-              value={formData.organization}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="project">Project Name</Label>
-            <Input
-              id="project"
-              name="project"
-              placeholder="Your-Project"
-              value={formData.project}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="team">Team Name (Optional)</Label>
-            <Input
-              id="team"
-              name="team"
-              placeholder="Your-Team"
-              value={formData.team}
-              onChange={handleChange}
-            />
-          </div>
-
           <Button onClick={handleSave} className="mt-4 bg-azure hover:bg-azure-light">
-            Save Settings
+            Save Token
           </Button>
         </div>
       </SheetContent>
