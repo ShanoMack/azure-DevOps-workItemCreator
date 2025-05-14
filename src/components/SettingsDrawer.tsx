@@ -50,7 +50,8 @@ export function SettingsDrawer() {
         <SheetHeader>
           <SheetTitle>Azure DevOps Authentication</SheetTitle>
           <SheetDescription>
-            Configure your Azure DevOps Personal Access Token. This token is stored locally in your browser.
+            Configure your Azure DevOps Personal Access Token.<br/> 
+            This token is stored locally in your browser.
           </SheetDescription>
         </SheetHeader>
         <div className="grid gap-4 py-4">

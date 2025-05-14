@@ -4,7 +4,6 @@ export interface SettingsData {
   organization: string;
   project: string;
   team?: string;
-  path?: string;
   projectConfigs?: ProjectConfig[];
 }
 
@@ -13,15 +12,32 @@ export interface ProjectConfig {
   name: string;
   organization: string;
   project: string;
-  path: string;
 }
 
 export interface WorkItem {
   title: string;
   description: string;
   acceptanceCriteria: string;
-  itemType: "Feature" | "Product Backlog Item" | "Bug" | "Task" | "Epic";
-  parentId?: number;
+  itemType:
+  | "Bug"
+  | "Bug QA"
+  | "Bug Staging"
+  | "Epic"
+  | "Feature"
+  | "Impediment"
+  | "Ops Epic"
+  | "Ops Feature"
+  | "PBI Defect"
+  | "PBI Feature"
+  | "PBI Hotfix"
+  | "PBI Spike"
+  | "Product Backlog Item"
+  | "Task"
+  | "Theme"
+  | "Untracked Epic"
+  | "Untracked Feature"
+  | "User Story";
+parentId?: number;
 }
 
 export interface Task {

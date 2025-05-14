@@ -60,13 +60,13 @@ export function BulkWorkItemForm() {
     }
 
     if (!projectConfigId) {
-      toast.error("Please select a project configuration");
+      toast.error("Please select a project");
       return;
     }
 
     const selectedConfig = projectConfigs.find(pc => pc.id === projectConfigId);
     if (!selectedConfig) {
-      toast.error("Invalid project configuration");
+      toast.error("Invalid project name");
       return;
     }
     
@@ -87,8 +87,7 @@ export function BulkWorkItemForm() {
       const configToUse = {
         personalAccessToken: settings.personalAccessToken,
         organization: selectedConfig.organization,
-        project: selectedConfig.project,
-        path: selectedConfig.path
+        project: selectedConfig.project
       };
 
       const parentId = bulkData.parentId ? parseInt(bulkData.parentId) : undefined;
@@ -125,24 +124,24 @@ export function BulkWorkItemForm() {
       <CardContent>
         <form onSubmit={handleBulkSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="projectConfig">Project Configuration</Label>
+            <Label htmlFor="projectConfig">Project Name</Label>
             <Select
               value={projectConfigId}
               onValueChange={setProjectConfigId}
             >
               <SelectTrigger id="projectConfig">
-                <SelectValue placeholder="Select project configuration" />
+                <SelectValue placeholder="Select a project" />
               </SelectTrigger>
               <SelectContent>
                 {projectConfigs.map(config => (
                   <SelectItem key={config.id} value={config.id}>
-                    {config.name} ({config.organization}/{config.project}{config.path && ` - ${config.path}`})
+                    {config.name} ({config.organization}/{config.project})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <p className="text-sm text-muted-foreground">
-              Select which project configuration to use
+              Select which project the board item(s) will be created within
             </p>
           </div>
 

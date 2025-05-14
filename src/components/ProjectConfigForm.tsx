@@ -21,8 +21,7 @@ export function ProjectConfigForm() {
   const [newConfig, setNewConfig] = useState<Omit<ProjectConfig, "id">>({
     name: "",
     organization: "",
-    project: "",
-    path: ""
+    project: ""
   });
 
   const handleAddConfig = () => {
@@ -31,8 +30,7 @@ export function ProjectConfigForm() {
       setNewConfig({
         name: "",
         organization: "",
-        project: "",
-        path: ""
+        project: ""
       });
     }
   };
@@ -56,15 +54,15 @@ export function ProjectConfigForm() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="name">Configuration Name</Label>
+              <Label htmlFor="name">Project Name</Label>
               <Input
                 id="name"
                 name="name"
                 value={newConfig.name}
                 onChange={handleInputChange}
-                placeholder="Team A"
+                placeholder="e.g. Project name board"
               />
             </div>
             <div>
@@ -78,7 +76,7 @@ export function ProjectConfigForm() {
               />
             </div>
             <div>
-              <Label htmlFor="project">Project</Label>
+              <Label htmlFor="project">Project URI</Label>
               <Input
                 id="project"
                 name="project"
@@ -86,19 +84,6 @@ export function ProjectConfigForm() {
                 onChange={handleInputChange}
                 placeholder="Your-Project"
               />
-            </div>
-            <div>
-              <Label htmlFor="path">Path (Optional)</Label>
-              <Input
-                id="path"
-                name="path"
-                value={newConfig.path}
-                onChange={handleInputChange}
-                placeholder="\Your\Path"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Path where work items will be created (e.g. \Area\Team)
-              </p>
             </div>
           </div>
           
@@ -121,22 +106,15 @@ export function ProjectConfigForm() {
                     <div className="flex-1">
                       <div className="font-medium">{config.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        {config.organization}/{config.project}{config.path ? ` - Path: ${config.path}` : ''}
+                        {config.organization}/{config.project}
                       </div>
                     </div>
                     <div className="flex space-x-2">
                       <Button 
                         variant="outline" 
-                        size="sm"
-                        onClick={() => selectProjectConfig(config.id)}
-                      >
-                        Select
-                      </Button>
-                      <Button 
-                        variant="destructive" 
-                        size="icon"
-                        onClick={() => deleteProjectConfig(config.id)}
-                      >
+                        className="text-red-500 border-red-500 hover:bg-red-500/10 hover:text-red-500"  
+                        size="icon" 
+                        onClick={() => deleteProjectConfig(config.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

@@ -45,13 +45,13 @@ export function TaskBreakdownForm() {
     }
 
     if (!projectConfigId) {
-      toast.error("Please select a project configuration");
+      toast.error("Please select a project");
       return;
     }
 
     const selectedConfig = projectConfigs.find(pc => pc.id === projectConfigId);
     if (!selectedConfig) {
-      toast.error("Invalid project configuration");
+      toast.error("Invalid project name");
       return;
     }
     
@@ -70,8 +70,7 @@ export function TaskBreakdownForm() {
       const configToUse = {
         personalAccessToken: settings.personalAccessToken,
         organization: selectedConfig.organization,
-        project: selectedConfig.project,
-        path: selectedConfig.path
+        project: selectedConfig.project
       };
 
       const storyType = storyTypes.find(s => s.id === storyTypeId);
@@ -100,57 +99,59 @@ export function TaskBreakdownForm() {
   return (
     <Card className="w-full mx-auto">
       <CardHeader>
-        <CardTitle>Apply Task Breakdown to Work Items</CardTitle>
-        <CardDescription>Add predefined tasks to your existing work items</CardDescription>
+        <CardTitle>Add tasks to existing working items</CardTitle>
+        <CardDescription>Add a batch of predefined tasks to the provided work item IDs based on the selected story type</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <label className="font-medium text-sm" htmlFor="projectConfig">Project Configuration</label>
-            <Select
-              value={projectConfigId}
-              onValueChange={setProjectConfigId}
-            >
-              <SelectTrigger id="projectConfig">
-                <SelectValue placeholder="Select project configuration" />
-              </SelectTrigger>
-              <SelectContent>
-                {projectConfigs.map(config => (
-                  <SelectItem key={config.id} value={config.id}>
-                    {config.name} ({config.organization}/{config.project}{config.path && ` - ${config.path}`})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground">
-              Select which project configuration to use
-            </p>
+        <form onSubmit={handleSubmit} className="space-y-6">          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="font-medium text-sm" htmlFor="projectConfig">Project Name</label>
+              <Select
+                value={projectConfigId}
+                onValueChange={setProjectConfigId}
+              >
+                <SelectTrigger id="projectConfig">
+                  <SelectValue placeholder="Select a project" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projectConfigs.map(config => (
+                    <SelectItem key={config.id} value={config.id}>
+                      {config.name} ({config.organization}/{config.project})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                  Select which project the board item(s) will be created within
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="font-medium text-sm" htmlFor="storyType">Story Type</label>
+              <Select 
+                value={storyTypeId} 
+                onValueChange={value => setStoryTypeId(value)}
+              >
+                <SelectTrigger id="storyType">
+                  <SelectValue placeholder="Select a story type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {storyTypes.map(storyType => (
+                    <SelectItem key={storyType.id} value={storyType.id}>
+                      {storyType.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedStoryType && (
+                <p className="text-sm text-muted-foreground">
+                  Contains {selectedStoryType.tasks.length} tasks
+                </p>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="font-medium text-sm" htmlFor="storyType">Story Type</label>
-            <Select 
-              value={storyTypeId} 
-              onValueChange={value => setStoryTypeId(value)}
-            >
-              <SelectTrigger id="storyType">
-                <SelectValue placeholder="Select story type" />
-              </SelectTrigger>
-              <SelectContent>
-                {storyTypes.map(storyType => (
-                  <SelectItem key={storyType.id} value={storyType.id}>
-                    {storyType.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedStoryType && (
-              <p className="text-sm text-muted-foreground">
-                Contains {selectedStoryType.tasks.length} tasks
-              </p>
-            )}
-          </div>
-          
           <WorkItemIdChips
             ids={workItemIds}
             onIdsChange={setWorkItemIds}
@@ -162,7 +163,7 @@ export function TaskBreakdownForm() {
             className="w-full bg-azure hover:bg-azure-light" 
             disabled={loading || !isConfigured || !storyTypeId || workItemIds.length === 0 || !projectConfigId}
           >
-            {loading ? "Applying..." : "Apply Tasks to Work Items"}
+            {loading ? "Adding..." : "Add tasks to Work Items"}
           </Button>
           
           {!isConfigured && (

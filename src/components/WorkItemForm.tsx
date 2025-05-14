@@ -59,13 +59,13 @@ export function WorkItemForm() {
     }
 
     if (!projectConfigId) {
-      toast.error("Please select a project configuration");
+      toast.error("Please select a project");
       return;
     }
 
     const selectedConfig = projectConfigs.find(pc => pc.id === projectConfigId);
     if (!selectedConfig) {
-      toast.error("Invalid project configuration");
+      toast.error("Invalid project name");
       return;
     }
     
@@ -76,8 +76,7 @@ export function WorkItemForm() {
       const configToUse = {
         personalAccessToken: settings.personalAccessToken,
         organization: selectedConfig.organization,
-        project: selectedConfig.project,
-        path: selectedConfig.path
+        project: selectedConfig.project
       };
 
       const result = await createWorkItem(configToUse, formData);
@@ -107,48 +106,52 @@ export function WorkItemForm() {
     <Card className="w-full mx-auto">
       <CardHeader>
         <CardTitle>Create Single Work Item</CardTitle>
-        <CardDescription>Create a new work item in your selected project</CardDescription>
+        <CardDescription>
+          Create a new work item in your selected project.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="projectConfig">Project Configuration</Label>
-            <Select
-              value={projectConfigId}
-              onValueChange={setProjectConfigId}
-            >
-              <SelectTrigger id="projectConfig">
-                <SelectValue placeholder="Select project configuration" />
-              </SelectTrigger>
-              <SelectContent>
-                {projectConfigs.map(config => (
-                  <SelectItem key={config.id} value={config.id}>
-                    {config.name} ({config.organization}/{config.project}{config.path && ` - ${config.path}`})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground">
-              Select which project configuration to use
-            </p>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="itemType">Work Item Type</Label>
-            <Select 
-              value={formData.itemType} 
-              onValueChange={handleSelectChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select work item type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Feature">Feature</SelectItem>
-                <SelectItem value="Product Backlog Item">Product Backlog Item</SelectItem>
-                <SelectItem value="Bug">Bug</SelectItem>
-                <SelectItem value="Task">Task</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="projectConfig">Project Name</Label>
+              <Select
+                value={projectConfigId}
+                onValueChange={setProjectConfigId}
+              >
+                <SelectTrigger id="projectConfig">
+                  <SelectValue placeholder="Select a project" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projectConfigs.map(config => (
+                    <SelectItem key={config.id} value={config.id}>
+                      {config.name} ({config.organization}/{config.project})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                Select which project the board item will be created within
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="itemType">Work Item Type</Label>
+              <Select 
+                value={formData.itemType} 
+                onValueChange={handleSelectChange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select work item type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Feature">Feature</SelectItem>
+                  <SelectItem value="Product Backlog Item">Product Backlog Item</SelectItem>
+                  <SelectItem value="Bug">Bug</SelectItem>
+                  <SelectItem value="Task">Task</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
           <div className="space-y-2">

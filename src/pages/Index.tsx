@@ -15,17 +15,22 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <header className="bg-white border-b shadow-sm py-4 px-6 flex justify-between items-center">
-        <h1 className="text-xl font-semibold text-azure">Azure DevOps Work Item Creator</h1>
+      <header className="sticky top-0 z-50 bg-white border-b shadow-sm py-4 px-6 flex justify-between items-center">
+        <div className="flex gap-2">
+          <img src="/public/images/icon-hug.svg" alt="Forge icon" className="h-7 auto" />
+          <h1 className="text-xl font-semibold text-azure">ADO Forge</h1>
+        </div>
         <SettingsDrawer />
       </header>
 
       <main className="flex-1 container mx-auto p-6 max-w-6xl">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-2">Work Item Management</h2>
-          <p className="text-gray-600">
-            Create and manage work items in your Azure DevOps projects
-          </p>
+          <div>
+            <h2 className="text-2xl font-bold">Azure DevOps Forge</h2>
+            <p className="text-gray-600">
+              Quickly, create and manage work items across your Azure DevOps projects
+            </p>
+          </div>
           
           {isConfigured ? (
             <div className="mt-2 px-3 py-2 bg-green-50 text-green-700 rounded-md inline-flex items-center text-sm">
@@ -98,7 +103,7 @@ const Index = () => {
       </main>
 
       <footer className="bg-white border-t py-4 px-6 text-center text-sm text-gray-500">
-        <p>Azure DevOps Work Item Creator - Your local tool for managing work items</p>
+        <p>Azure DevOps Forge © 2025 </p>
       </footer>
     </div>
   );

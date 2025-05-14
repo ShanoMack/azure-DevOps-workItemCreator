@@ -46,15 +46,6 @@ export async function createWorkItem(
       });
     }
 
-    // If area path is specified in the project config, use it
-    if (settings.path) {
-      patchDocument.push({
-        op: "add",
-        path: "/fields/System.AreaPath",
-        value: `${settings.project}${settings.path}`
-      });
-    }
-
     // Make the API request
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -131,16 +122,7 @@ export async function createChildTasks(
           url: `https://dev.azure.com/${settings.organization}/${settings.project}/_apis/wit/workItems/${parentId}`
         }
       } as any); // Using any to bypass the TypeScript error
-      
-      // If area path is specified, use it
-      if (settings.path) {
-        patchDocument.push({
-          op: "add",
-          path: "/fields/System.AreaPath",
-          value: `${settings.project}${settings.path}`
-        });
-      }
-      
+            
       // Add activity type if specified
       if (task.activity) {
         patchDocument.push({
@@ -224,15 +206,6 @@ export async function createBulkWorkItems(
           value: title
         }
       ];
-      
-      // If area path is specified, use it
-      if (settings.path) {
-        patchDocument.push({
-          op: "add",
-          path: "/fields/System.AreaPath",
-          value: `${settings.project}${settings.path}`
-        });
-      }
       
       // Add parent relation if specified
       if (parentId) {
