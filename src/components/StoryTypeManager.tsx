@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSettings } from "@/contexts/SettingsContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash2, Edit, Save } from "lucide-react";
 import { StoryType, Task, WorkItem } from "@/types/azure-devops";
 
@@ -109,21 +109,22 @@ export function StoryTypeManager() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Story Types</CardTitle>
+          <CardTitle>Configure your story types</CardTitle>
+          <CardDescription>Set up personalised story types and configure the respective work items that will be created when used</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="storyTypeName">Story Type Name</Label>
                 <Input
                   id="storyTypeName"
                   value={newStoryType.name}
                   onChange={handleStoryTypeChange}
-                  placeholder="API & Gateway"
+                  placeholder="e.g. Start of Sprint"
                 />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="workItemType">Work Item Type</Label>
                 <Select
                   value={newStoryType.workItemType}
@@ -182,11 +183,11 @@ export function StoryTypeManager() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Tasks for {selectedStoryType.name}</CardTitle>
             <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={() => deleteStoryType(selectedStoryType.id)}
-            >
-              Delete Story Type
+              variant="outline" 
+              className="text-red-500 border-red-500 hover:bg-red-500/10 hover:text-red-500"  
+              size="icon" 
+              onClick={() => deleteStoryType(selectedStoryType.id)}>
+              <Trash2 className="h-4 w-4" />
             </Button>
           </CardHeader>
           <CardContent>
@@ -199,7 +200,7 @@ export function StoryTypeManager() {
                     name="name"
                     value={newTask.name}
                     onChange={handleTaskInputChange}
-                    placeholder="Create API Gateway"
+                    placeholder="Enter a task name"
                   />
                 </div>
                 <div>

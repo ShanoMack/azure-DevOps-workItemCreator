@@ -8,7 +8,11 @@
     <meta property="og:title" content="ADO Forge" />
     <meta property="og:description" content="Quickly create work items in Azure DevOps" />
     <meta property="og:type" content="website" />
-    <link rel="icon" type="image/svg" href="/public/images/icon-sq.svg" />
+    <link id="favicon" rel="icon" type="image/svg+xml" />
+    <script type="module">
+      const base = import.meta.env.BASE_URL || "/";
+      document.getElementById("favicon").href = `${base}images/icon-sq.svg`;
+    </script>
   </head>
   <body>
     <div id="root"></div>

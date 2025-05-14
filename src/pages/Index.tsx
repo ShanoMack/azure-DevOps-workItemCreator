@@ -16,9 +16,9 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <header className="sticky top-0 z-50 bg-white border-b shadow-sm py-4 px-6 flex justify-between items-center">
-        <div className="flex gap-2">
-          <img src={`${import.meta.env.BASE_URL}/images/icon-hug.svg`} alt="Forge icon" className="h-7 auto" />
-          <h1 className="text-xl font-semibold text-azure">ADO Forge</h1>
+        <div className="flex gap-2 items-end">
+          <img src={`${import.meta.env.BASE_URL}images/icon-hug.svg`} alt="Forge icon" className="h-8 auto" />
+          <h1 className="text-xl font-bold text-azure">ADO Forge</h1>
         </div>
         <SettingsDrawer />
       </header>

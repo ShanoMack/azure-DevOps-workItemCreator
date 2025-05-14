@@ -118,49 +118,35 @@ export function BulkWorkItemForm() {
   return (
     <Card className="w-full mx-auto">
       <CardHeader>
-        <CardTitle>Bulk Work Item Creation</CardTitle>
-        <CardDescription>Create multiple work items at once by entering titles on separate lines</CardDescription>
+        <CardTitle>Bulk work item creation</CardTitle>
+        <CardDescription>Create many work items of the same type at once, by entering the titles on separate lines</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleBulkSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="projectConfig">Project Name</Label>
-            <Select
-              value={projectConfigId}
-              onValueChange={setProjectConfigId}
-            >
-              <SelectTrigger id="projectConfig">
-                <SelectValue placeholder="Select a project" />
-              </SelectTrigger>
-              <SelectContent>
-                {projectConfigs.map(config => (
-                  <SelectItem key={config.id} value={config.id}>
-                    {config.name} ({config.organization}/{config.project})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground">
-              Select which project the board item(s) will be created within
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <Label htmlFor="parentId">Parent ID (Optional)</Label>
-              <Input
-                id="parentId"
-                name="parentId"
-                value={bulkData.parentId}
-                onChange={handleBulkInputChange}
-                placeholder="Enter parent work item ID"
-              />
-              <p className="text-sm text-muted-foreground mt-1">
-                Leave empty if you don't want to link to a parent
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="projectConfig">Project Name</Label>
+              <Select
+                value={projectConfigId}
+                onValueChange={setProjectConfigId}
+              >
+                <SelectTrigger id="projectConfig">
+                  <SelectValue placeholder="Select a project" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projectConfigs.map(config => (
+                    <SelectItem key={config.id} value={config.id}>
+                      {config.name} ({config.organization}/{config.project})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                Select which project the board item(s) will be created within
               </p>
-            </div>
-            
-            <div>
+            </div>            
+            <div className="space-y-2">
               <Label htmlFor="itemType">Work Item Type</Label>
               <Select 
                 value={bulkData.itemType} 
@@ -178,6 +164,20 @@ export function BulkWorkItemForm() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="parentId">Parent ID (Optional)</Label>
+            <Input
+              id="parentId"
+              name="parentId"
+              value={bulkData.parentId}
+              onChange={handleBulkInputChange}
+              placeholder="Enter parent work item ID"
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              Leave empty if you don't want to link to a parent
+            </p>
           </div>
           
           <div className="space-y-2">
