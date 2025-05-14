@@ -1,9 +1,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -12,35 +9,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StoryType } from "@/types/azure-devops";
+import { StoryType, Task } from "@/types/azure-devops";
 import { useSettings } from "@/contexts/SettingsContext";
-import { createChildTasks } from "@/services/azure-devops-service";
+import { applyTasksToWorkItems } from "@/services/azure-devops-service";
 import { toast } from "sonner";
+import { WorkItemIdChips } from "./WorkItemIdChips";
 
 export function TaskBreakdownForm() {
-  const { settings, isConfigured, storyTypes } = useSettings();
+  const { settings, isConfigured, storyTypes, projectConfigs, selectedProjectConfig } = useSettings();
   const [loading, setLoading] = useState(false);
-  
-  const [formData, setFormData] = useState({
-    workItemIds: "",
-    selectedStoryTypeId: ""
-  });
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-  
-  const handleStoryTypeChange = (value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedStoryTypeId: value
-    }));
-  };
-  
+  const [storyTypeId, setStoryTypeId] = useState<string | undefined>(undefined);
+  const [workItemIds, setWorkItemIds] = useState<string[]>([]);
+  const [projectConfigId, setProjectConfigId] = useState<string | undefined>(
+    selectedProjectConfig?.id || undefined
+  );
+
+  const selectedStoryType = storyTypes.find(s => s.id === storyTypeId);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -49,137 +34,138 @@ export function TaskBreakdownForm() {
       return;
     }
     
-    if (!formData.workItemIds.trim()) {
-      toast.error("Please enter at least one work item ID");
-      return;
-    }
-    
-    if (!formData.selectedStoryTypeId) {
+    if (!storyTypeId) {
       toast.error("Please select a story type");
       return;
     }
     
-    const workItemIds = formData.workItemIds
-      .split(/[\s,]+/)
-      .map(id => id.trim())
-      .filter(id => /^\d+$/.test(id))
-      .map(id => parseInt(id));
-    
     if (workItemIds.length === 0) {
-      toast.error("Please enter at least one valid work item ID");
+      toast.error("Please enter at least one work item ID");
       return;
     }
-    
-    const selectedStoryType = storyTypes.find(s => s.id === formData.selectedStoryTypeId);
-    if (!selectedStoryType) {
-      toast.error("Selected story type not found");
+
+    const selectedConfig = projectConfigs.find(pc => pc.id === projectConfigId);
+    if (!selectedConfig && projectConfigs.length > 0) {
+      toast.error("Please select a project configuration");
       return;
     }
     
     setLoading(true);
     
+    const ids = workItemIds.map(id => parseInt(id)).filter(id => !isNaN(id));
+    
+    if (ids.length === 0) {
+      toast.error("No valid work item IDs provided");
+      setLoading(false);
+      return;
+    }
+    
     try {
-      // For each work item ID, create the tasks from the selected story type
-      const promises = workItemIds.map(async workItemId => {
-        return await createChildTasks(
-          settings,
-          workItemId,
-          selectedStoryType.tasks
-        );
-      });
+      // Use the selected project config or fall back to the global settings
+      const configToUse = selectedConfig 
+        ? {
+            ...settings,
+            organization: selectedConfig.organization,
+            project: selectedConfig.project,
+            path: selectedConfig.path
+          }
+        : settings;
+
+      const storyType = storyTypes.find(s => s.id === storyTypeId);
       
-      await Promise.all(promises);
+      if (!storyType) {
+        throw new Error("Story type not found");
+      }
+      
+      await applyTasksToWorkItems(configToUse, ids, storyType.tasks);
       
       toast.success(
         <div className="flex flex-col">
-          <span>Successfully applied task breakdown to {workItemIds.length} work items!</span>
+          <span>Tasks created successfully!</span>
+          <span className="text-sm text-muted-foreground">
+            Applied {storyType.tasks.length} tasks to {ids.length} work items
+          </span>
         </div>
       );
-      
-      setFormData({
-        ...formData,
-        workItemIds: ""
-      });
     } catch (error: any) {
-      toast.error(`Failed to apply task breakdown: ${error.message}`);
+      toast.error(`Failed to create tasks: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
   
-  const selectedStoryType = storyTypes.find(s => s.id === formData.selectedStoryTypeId);
-
   return (
     <Card className="w-full mx-auto">
       <CardHeader>
-        <CardTitle>Apply Task Breakdown</CardTitle>
+        <CardTitle>Apply Task Breakdown to Work Items</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {projectConfigs.length > 0 && (
+            <div className="space-y-2">
+              <label className="font-medium text-sm" htmlFor="projectConfig">Project Configuration</label>
+              <Select
+                value={projectConfigId}
+                onValueChange={setProjectConfigId}
+              >
+                <SelectTrigger id="projectConfig">
+                  <SelectValue placeholder="Select project configuration" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projectConfigs.map(config => (
+                    <SelectItem key={config.id} value={config.id}>
+                      {config.name} ({config.organization}/{config.project})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                Select which project configuration to use
+              </p>
+            </div>
+          )}
+
           <div className="space-y-2">
-            <Label htmlFor="workItemIds">Work Item IDs</Label>
-            <Textarea
-              id="workItemIds"
-              name="workItemIds"
-              value={formData.workItemIds}
-              onChange={handleInputChange}
-              placeholder="Enter work item IDs (separated by spaces or commas)"
-              rows={3}
-            />
-            <p className="text-sm text-muted-foreground">
-              These work items will get the task breakdown applied to them
-            </p>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="storyType">Story Type</Label>
+            <label className="font-medium text-sm" htmlFor="storyType">Story Type</label>
             <Select 
-              value={formData.selectedStoryTypeId} 
-              onValueChange={handleStoryTypeChange}
+              value={storyTypeId} 
+              onValueChange={value => setStoryTypeId(value)}
             >
               <SelectTrigger id="storyType">
-                <SelectValue placeholder="Select a story type" />
+                <SelectValue placeholder="Select story type" />
               </SelectTrigger>
               <SelectContent>
                 {storyTypes.map(storyType => (
                   <SelectItem key={storyType.id} value={storyType.id}>
-                    {storyType.name} ({storyType.workItemType}) - {storyType.tasks.length} tasks
+                    {storyType.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {selectedStoryType && (
+              <p className="text-sm text-muted-foreground">
+                Contains {selectedStoryType.tasks.length} tasks
+              </p>
+            )}
           </div>
           
-          {selectedStoryType && selectedStoryType.tasks.length > 0 && (
-            <div className="border rounded-md p-4">
-              <h3 className="text-sm font-medium mb-2">Tasks to be created ({selectedStoryType.tasks.length}):</h3>
-              <ul className="list-disc pl-5 space-y-1">
-                {selectedStoryType.tasks.map(task => (
-                  <li key={task.id} className="text-sm">
-                    {task.name} - {task.activity} ({task.hours} hours)
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <WorkItemIdChips
+            ids={workItemIds}
+            onIdsChange={setWorkItemIds}
+            placeholder="Type work item ID and press Enter"
+          />
           
           <Button 
             type="submit" 
             className="w-full bg-azure hover:bg-azure-light" 
-            disabled={loading || !isConfigured || !formData.selectedStoryTypeId || !formData.workItemIds.trim()}
+            disabled={loading || !isConfigured || !storyTypeId || workItemIds.length === 0}
           >
-            {loading ? "Applying..." : "Apply Task Breakdown"}
+            {loading ? "Applying..." : "Apply Tasks to Work Items"}
           </Button>
           
           {!isConfigured && (
             <p className="text-center text-sm text-muted-foreground">
               Please configure your Azure DevOps settings first.
-            </p>
-          )}
-          
-          {storyTypes.length === 0 && (
-            <p className="text-center text-sm text-amber-500">
-              You need to create story types before you can apply task breakdowns.
             </p>
           )}
         </form>

@@ -18,8 +18,11 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 
 export function WorkItemForm() {
-  const { settings, isConfigured } = useSettings();
+  const { settings, isConfigured, projectConfigs, selectedProjectConfig } = useSettings();
   const [loading, setLoading] = useState(false);
+  const [projectConfigId, setProjectConfigId] = useState<string | undefined>(
+    selectedProjectConfig?.id || undefined
+  );
   const [formData, setFormData] = useState<WorkItem>({
     title: "",
     description: "",
@@ -54,11 +57,27 @@ export function WorkItemForm() {
       toast.error("Title is required");
       return;
     }
+
+    const selectedConfig = projectConfigs.find(pc => pc.id === projectConfigId);
+    if (!selectedConfig && projectConfigs.length > 0) {
+      toast.error("Please select a project configuration");
+      return;
+    }
     
     setLoading(true);
     
     try {
-      const result = await createWorkItem(settings, formData);
+      // Use the selected project config or fall back to the global settings
+      const configToUse = selectedConfig 
+        ? {
+            ...settings,
+            organization: selectedConfig.organization,
+            project: selectedConfig.project,
+            path: selectedConfig.path
+          }
+        : settings;
+
+      const result = await createWorkItem(configToUse, formData);
       
       toast.success(
         <div className="flex flex-col">
@@ -85,6 +104,30 @@ export function WorkItemForm() {
     <Card className="w-full mx-auto">
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit} className="space-y-6">
+          {projectConfigs.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="projectConfig">Project Configuration</Label>
+              <Select
+                value={projectConfigId}
+                onValueChange={setProjectConfigId}
+              >
+                <SelectTrigger id="projectConfig">
+                  <SelectValue placeholder="Select project configuration" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projectConfigs.map(config => (
+                    <SelectItem key={config.id} value={config.id}>
+                      {config.name} ({config.organization}/{config.project})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                Select which project configuration to use
+              </p>
+            </div>
+          )}
+          
           <div className="space-y-2">
             <Label htmlFor="itemType">Work Item Type</Label>
             <Select 
@@ -142,7 +185,7 @@ export function WorkItemForm() {
           <Button 
             type="submit" 
             className="w-full bg-azure hover:bg-azure-light" 
-            disabled={loading || !isConfigured}
+            disabled={loading || !isConfigured || (projectConfigs.length > 0 && !projectConfigId)}
           >
             {loading ? "Creating..." : "Create Work Item"}
           </Button>

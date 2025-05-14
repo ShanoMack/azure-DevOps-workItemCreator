@@ -16,11 +16,13 @@ import { WorkItem } from "@/types/azure-devops";
 import { useSettings } from "@/contexts/SettingsContext";
 import { createBulkWorkItems } from "@/services/azure-devops-service";
 import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function BulkWorkItemForm() {
-  const { settings, isConfigured } = useSettings();
+  const { settings, isConfigured, projectConfigs, selectedProjectConfig } = useSettings();
   const [loading, setLoading] = useState(false);
+  const [projectConfigId, setProjectConfigId] = useState<string | undefined>(
+    selectedProjectConfig?.id || undefined
+  );
   
   // For bulk creation
   const [bulkData, setBulkData] = useState({
@@ -56,6 +58,12 @@ export function BulkWorkItemForm() {
       toast.error("Please enter at least one title");
       return;
     }
+
+    const selectedConfig = projectConfigs.find(pc => pc.id === projectConfigId);
+    if (!selectedConfig && projectConfigs.length > 0) {
+      toast.error("Please select a project configuration");
+      return;
+    }
     
     const titles = bulkData.titles
       .split("\n")
@@ -70,9 +78,19 @@ export function BulkWorkItemForm() {
     setLoading(true);
     
     try {
+      // Use the selected project config or fall back to the global settings
+      const configToUse = selectedConfig 
+        ? {
+            ...settings,
+            organization: selectedConfig.organization,
+            project: selectedConfig.project,
+            path: selectedConfig.path
+          }
+        : settings;
+
       const parentId = bulkData.parentId ? parseInt(bulkData.parentId) : undefined;
       const results = await createBulkWorkItems(
-        settings,
+        configToUse,
         parentId,
         bulkData.itemType,
         titles
@@ -102,6 +120,30 @@ export function BulkWorkItemForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleBulkSubmit} className="space-y-6">
+          {projectConfigs.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="projectConfig">Project Configuration</Label>
+              <Select
+                value={projectConfigId}
+                onValueChange={setProjectConfigId}
+              >
+                <SelectTrigger id="projectConfig">
+                  <SelectValue placeholder="Select project configuration" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projectConfigs.map(config => (
+                    <SelectItem key={config.id} value={config.id}>
+                      {config.name} ({config.organization}/{config.project})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                Select which project configuration to use
+              </p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label htmlFor="parentId">Parent ID (Optional)</Label>
@@ -152,7 +194,7 @@ export function BulkWorkItemForm() {
           <Button 
             type="submit" 
             className="w-full bg-azure hover:bg-azure-light" 
-            disabled={loading || !isConfigured || !bulkData.titles.trim()}
+            disabled={loading || !isConfigured || !bulkData.titles.trim() || (projectConfigs.length > 0 && !projectConfigId)}
           >
             {loading ? "Creating..." : "Create Work Items"}
           </Button>
