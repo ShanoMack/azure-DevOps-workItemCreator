@@ -20,15 +20,65 @@ export async function createWorkItem(
     if (workItem.parentId) {
       console.log(`Parent ID: ${workItem.parentId}`);
     }
+
+    // Prepare the payload in Azure DevOps API format (JSON Patch document)
+    const patchDocument = [
+      {
+        op: "add",
+        path: "/fields/System.Title",
+        value: workItem.title
+      }
+    ];
+
+    if (workItem.description) {
+      patchDocument.push({
+        op: "add",
+        path: "/fields/System.Description",
+        value: workItem.description
+      });
+    }
+
+    if (workItem.acceptanceCriteria) {
+      patchDocument.push({
+        op: "add",
+        path: "/fields/Microsoft.VSTS.Common.AcceptanceCriteria",
+        value: workItem.acceptanceCriteria
+      });
+    }
+
+    // If area path is specified, use it
+    if (settings.path) {
+      patchDocument.push({
+        op: "add",
+        path: "/fields/System.AreaPath",
+        value: `${settings.project}${settings.path}`
+      });
+    }
+
+    // Make the API request
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json-patch+json",
+        "Authorization": `Basic ${encodedPat}`
+      },
+      body: JSON.stringify(patchDocument)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Azure DevOps API Error (${response.status}): ${errorText}`);
+    }
+
+    const data = await response.json();
     
-    // Simulate a successful API response
     return {
-      id: Math.floor(Math.random() * 10000),
-      url: `https://dev.azure.com/${settings.organization}/${settings.project}/_workitems/edit/${Math.floor(Math.random() * 10000)}`,
+      id: data.id,
+      url: data._links.html.href,
       fields: {
-        "System.Title": workItem.title,
-        "System.Description": workItem.description,
-        "System.State": "New"
+        "System.Title": data.fields["System.Title"],
+        "System.Description": data.fields["System.Description"] || "",
+        "System.State": data.fields["System.State"]
       },
       success: true
     };
@@ -48,22 +98,97 @@ export async function createChildTasks(
 ): Promise<AzureDevOpsApiResponse[]> {
   try {
     console.log(`Creating ${tasks.length} tasks for parent ID: ${parentId}`);
+    const results: AzureDevOpsApiResponse[] = [];
     
-    // In a real implementation, we would loop through the tasks and create them
-    const responses = tasks.map(task => {
-      return {
-        id: Math.floor(Math.random() * 10000),
-        url: `https://dev.azure.com/${settings.organization}/${settings.project}/_workitems/edit/${Math.floor(Math.random() * 10000)}`,
+    // Base64 encode the PAT
+    const encodedPat = btoa(`:${settings.personalAccessToken}`);
+    
+    // Process each task and make an API call for each
+    for (const task of tasks) {
+      // Construct the API URL for task creation
+      const apiUrl = `https://dev.azure.com/${settings.organization}/${settings.project}/_apis/wit/workitems/$Task?api-version=6.0`;
+      
+      // Prepare the payload in Azure DevOps API format
+      const patchDocument = [
+        {
+          op: "add",
+          path: "/fields/System.Title",
+          value: task.name
+        },
+        {
+          op: "add",
+          path: "/fields/System.Description",
+          value: ""
+        }
+      ];
+      
+      // Add parent relation
+      patchDocument.push({
+        op: "add",
+        path: "/relations/-",
+        value: {
+          rel: "System.LinkTypes.Hierarchy-Reverse",
+          url: `https://dev.azure.com/${settings.organization}/${settings.project}/_apis/wit/workItems/${parentId}`
+        }
+      });
+      
+      // If area path is specified, use it
+      if (settings.path) {
+        patchDocument.push({
+          op: "add",
+          path: "/fields/System.AreaPath",
+          value: `${settings.project}${settings.path}`
+        });
+      }
+      
+      // Add activity type if specified
+      if (task.activity) {
+        patchDocument.push({
+          op: "add",
+          path: "/fields/Microsoft.VSTS.Common.Activity",
+          value: task.activity
+        });
+      }
+      
+      // Add original estimate if hours specified
+      if (task.hours) {
+        patchDocument.push({
+          op: "add",
+          path: "/fields/Microsoft.VSTS.Scheduling.OriginalEstimate",
+          value: task.hours.toString()
+        });
+      }
+      
+      // Make the API request
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json-patch+json",
+          "Authorization": `Basic ${encodedPat}`
+        },
+        body: JSON.stringify(patchDocument)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Azure DevOps API Error (${response.status}): ${errorText}`);
+      }
+      
+      const data = await response.json();
+      
+      results.push({
+        id: data.id,
+        url: data._links.html.href,
         fields: {
-          "System.Title": task.name,
-          "System.Description": "",
-          "System.State": "New"
+          "System.Title": data.fields["System.Title"],
+          "System.Description": data.fields["System.Description"] || "",
+          "System.State": data.fields["System.State"]
         },
         success: true
-      };
-    });
+      });
+    }
     
-    return responses;
+    return results;
   } catch (error) {
     console.error("Error creating child tasks:", error);
     throw {
@@ -81,22 +206,76 @@ export async function createBulkWorkItems(
 ): Promise<AzureDevOpsApiResponse[]> {
   try {
     console.log(`Creating ${titles.length} ${itemType}s${parentId ? ` with parent ID: ${parentId}` : ''}`);
+    const results: AzureDevOpsApiResponse[] = [];
     
-    // In a real implementation, we would loop through the titles and create them
-    const responses = titles.map(title => {
-      return {
-        id: Math.floor(Math.random() * 10000),
-        url: `https://dev.azure.com/${settings.organization}/${settings.project}/_workitems/edit/${Math.floor(Math.random() * 10000)}`,
+    // Base64 encode the PAT
+    const encodedPat = btoa(`:${settings.personalAccessToken}`);
+    
+    // Process each title and create a work item for each
+    for (const title of titles) {
+      // Construct the API URL
+      const apiUrl = `https://dev.azure.com/${settings.organization}/${settings.project}/_apis/wit/workitems/$${itemType}?api-version=6.0`;
+      
+      // Prepare the payload
+      const patchDocument = [
+        {
+          op: "add",
+          path: "/fields/System.Title",
+          value: title
+        }
+      ];
+      
+      // If area path is specified, use it
+      if (settings.path) {
+        patchDocument.push({
+          op: "add",
+          path: "/fields/System.AreaPath",
+          value: `${settings.project}${settings.path}`
+        });
+      }
+      
+      // Add parent relation if specified
+      if (parentId) {
+        patchDocument.push({
+          op: "add",
+          path: "/relations/-",
+          value: {
+            rel: "System.LinkTypes.Hierarchy-Reverse",
+            url: `https://dev.azure.com/${settings.organization}/${settings.project}/_apis/wit/workItems/${parentId}`
+          }
+        });
+      }
+      
+      // Make the API request
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json-patch+json",
+          "Authorization": `Basic ${encodedPat}`
+        },
+        body: JSON.stringify(patchDocument)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Azure DevOps API Error (${response.status}): ${errorText}`);
+      }
+      
+      const data = await response.json();
+      
+      results.push({
+        id: data.id,
+        url: data._links.html.href,
         fields: {
-          "System.Title": title,
-          "System.Description": "",
-          "System.State": "New"
+          "System.Title": data.fields["System.Title"],
+          "System.Description": data.fields["System.Description"] || "",
+          "System.State": data.fields["System.State"]
         },
         success: true
-      };
-    });
+      });
+    }
     
-    return responses;
+    return results;
   } catch (error) {
     console.error("Error creating bulk work items:", error);
     throw {
@@ -141,3 +320,4 @@ export async function applyTasksToWorkItems(
     } as ApiError;
   }
 }
+
