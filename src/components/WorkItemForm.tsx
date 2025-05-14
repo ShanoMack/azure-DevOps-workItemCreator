@@ -117,7 +117,7 @@ export function WorkItemForm() {
                 <SelectContent>
                   {projectConfigs.map(config => (
                     <SelectItem key={config.id} value={config.id}>
-                      {config.name} ({config.organization}/{config.project})
+                      {config.name} ({config.organization}/{config.project}{config.path && ` - ${config.path}`})
                     </SelectItem>
                   ))}
                 </SelectContent>
