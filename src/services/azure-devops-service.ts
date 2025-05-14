@@ -1,5 +1,5 @@
 
-import { SettingsData, WorkItem, AzureDevOpsApiResponse, ApiError, Task } from "../types/azure-devops";
+import { SettingsData, WorkItem, AzureDevOpsApiResponse, ApiError, Task, StoryType } from "../types/azure-devops";
 
 export async function createWorkItem(
   settings: SettingsData,
@@ -99,6 +99,42 @@ export async function createBulkWorkItems(
     return responses;
   } catch (error) {
     console.error("Error creating bulk work items:", error);
+    throw {
+      message: error instanceof Error ? error.message : "Unknown error occurred",
+      statusCode: 500
+    } as ApiError;
+  }
+}
+
+/**
+ * Apply a set of tasks to multiple work items
+ * @param settings The Azure DevOps settings
+ * @param workItemIds Array of work item IDs to apply tasks to
+ * @param tasks Array of tasks to create for each work item
+ * @returns Array of API responses, one per created task
+ */
+export async function applyTasksToWorkItems(
+  settings: SettingsData, 
+  workItemIds: number[], 
+  tasks: Task[]
+): Promise<AzureDevOpsApiResponse[]> {
+  try {
+    console.log(`Applying ${tasks.length} tasks to ${workItemIds.length} work items`);
+    console.log(`Organization: ${settings.organization}`);
+    console.log(`Project: ${settings.project}`);
+    
+    let allResponses: AzureDevOpsApiResponse[] = [];
+    
+    // For each work item ID, create all the tasks
+    for (const workItemId of workItemIds) {
+      console.log(`Creating tasks for work item ${workItemId}`);
+      const responses = await createChildTasks(settings, workItemId, tasks);
+      allResponses = [...allResponses, ...responses];
+    }
+    
+    return allResponses;
+  } catch (error) {
+    console.error("Error applying tasks to work items:", error);
     throw {
       message: error instanceof Error ? error.message : "Unknown error occurred",
       statusCode: 500
