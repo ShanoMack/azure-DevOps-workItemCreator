@@ -37,7 +37,7 @@ export interface WorkItem {
   | "Untracked Epic"
   | "Untracked Feature"
   | "User Story";
-parentId?: number;
+  parentId?: number;
 }
 
 export interface Task {

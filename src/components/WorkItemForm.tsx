@@ -24,10 +24,11 @@ export function WorkItemForm() {
     selectedProjectConfig?.id || undefined
   );
   const [formData, setFormData] = useState<WorkItem>({
+    parentId: undefined,
     title: "",
     description: "",
     acceptanceCriteria: "",
-    itemType: "Product Backlog Item",
+    itemType: "PBI Feature" as WorkItem["itemType"],
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -35,6 +36,14 @@ export function WorkItemForm() {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  const handleParentIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      parentId: value ? parseInt(value, 10) : undefined,
     }));
   };
 
@@ -79,7 +88,9 @@ export function WorkItemForm() {
         project: selectedConfig.project
       };
 
-      const result = await createWorkItem(configToUse, formData);
+      const result = await createWorkItem(
+        configToUse,
+        formData);
       
       toast.success(
         <div className="flex flex-col">
@@ -105,14 +116,14 @@ export function WorkItemForm() {
   return (
     <Card className="w-full mx-auto">
       <CardHeader>
-        <CardTitle>Create Single Work Item</CardTitle>
+        <CardTitle>Create single backlog item</CardTitle>
         <CardDescription>
-          Create a new work item in your selected project.
+          Create a new work item in your selected project with added details
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="projectConfig">Project Name</Label>
               <Select
@@ -131,7 +142,7 @@ export function WorkItemForm() {
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground">
-                Select which project the board item will be created within
+                The board the work item will be created within
               </p>
             </div>
             
@@ -145,15 +156,32 @@ export function WorkItemForm() {
                   <SelectValue placeholder="Select work item type" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="Epic">Epic</SelectItem>
                   <SelectItem value="Feature">Feature</SelectItem>
-                  <SelectItem value="Product Backlog Item">Product Backlog Item</SelectItem>
-                  <SelectItem value="Bug">Bug</SelectItem>
+                  <SelectItem value="PBI Feature">PBI Feature</SelectItem>
+                  <SelectItem value="PBI Spike">PBI Spike</SelectItem>
                   <SelectItem value="Task">Task</SelectItem>
+                  <SelectItem value="Theme">Theme</SelectItem>
+                  <SelectItem value="User Story">User Story</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="parentId">Parent ID (Optional)</Label>
+              <Input
+                id="parentId"
+                name="parentId"
+                value={formData.parentId}
+                onChange={handleParentIdChange}
+                placeholder="Enter parent work item ID"
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Leave empty if you don't want to link to a parent
+              </p>
+            </div>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
             <Input
@@ -165,7 +193,7 @@ export function WorkItemForm() {
               required
             />
           </div>
-          
+            
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
@@ -177,7 +205,7 @@ export function WorkItemForm() {
               rows={3}
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="acceptanceCriteria">Acceptance Criteria</Label>
             <Textarea

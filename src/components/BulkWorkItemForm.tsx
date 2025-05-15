@@ -27,7 +27,7 @@ export function BulkWorkItemForm() {
   // For bulk creation
   const [bulkData, setBulkData] = useState({
     parentId: "",
-    itemType: "Product Backlog Item" as WorkItem["itemType"],
+    itemType: "PBI Feature" as WorkItem["itemType"],
     titles: ""
   });
   
@@ -124,7 +124,7 @@ export function BulkWorkItemForm() {
       <CardContent>
         <form onSubmit={handleBulkSubmit} className="space-y-6">
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="projectConfig">Project Name</Label>
               <Select
@@ -137,13 +137,13 @@ export function BulkWorkItemForm() {
                 <SelectContent>
                   {projectConfigs.map(config => (
                     <SelectItem key={config.id} value={config.id}>
-                      {config.name} ({config.organization}/{config.project})
+                      {config.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground">
-                Select which project the board item(s) will be created within
+                The board the work item(s) will be created within
               </p>
             </div>            
             <div className="space-y-2">
@@ -156,28 +156,30 @@ export function BulkWorkItemForm() {
                   <SelectValue placeholder="Select work item type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Feature">Feature</SelectItem>
                   <SelectItem value="Epic">Epic</SelectItem>
-                  <SelectItem value="Product Backlog Item">Product Backlog Item</SelectItem>
-                  <SelectItem value="Bug">Bug</SelectItem>
+                  <SelectItem value="Feature">Feature</SelectItem>
+                  <SelectItem value="PBI Feature">PBI Feature</SelectItem>
+                  <SelectItem value="PBI Spike">PBI Spike</SelectItem>
                   <SelectItem value="Task">Task</SelectItem>
+                  <SelectItem value="Theme">Theme</SelectItem>
+                  <SelectItem value="User Story">User Story</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="parentId">Parent ID (Optional)</Label>
-            <Input
-              id="parentId"
-              name="parentId"
-              value={bulkData.parentId}
-              onChange={handleBulkInputChange}
-              placeholder="Enter parent work item ID"
-            />
-            <p className="text-sm text-muted-foreground mt-1">
-              Leave empty if you don't want to link to a parent
-            </p>
+            <div className="space-y-2">
+              <Label htmlFor="parentId">Parent ID (Optional)</Label>
+              <Input
+                id="parentId"
+                name="parentId"
+                value={bulkData.parentId}
+                onChange={handleBulkInputChange}
+                placeholder="Enter parent work item ID"
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Leave empty if you don't want to link to a parent
+              </p>
+            </div>
           </div>
           
           <div className="space-y-2">
